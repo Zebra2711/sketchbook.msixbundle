@@ -24,9 +24,14 @@ powershell -Command "$path = [System.IO.Path]::Combine($env:TEMP, 'Sketchbook.Sk
 if not exist "C:\Windows\System32\config\systemprofile\Desktop" mkdir "C:\Windows\System32\config\systemprofile\Desktop"
 
 :: Create shortcut
-:: For 64-bit (Default)
-powershell "$s=(New-Object -COM WScript.Shell).CreateShortcut('%userprofile%\Desktop\Sketchbook Pro.lnk');$s.TargetPath='C:\Program Files\RunAsTI\RunAsTI64.exe';$s.IconLocation='C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x64__k9x4nk31cvt0g\SketchBookPro\SketchbookPro.exe';$s.Arguments='\"C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x64__k9x4nk31cvt0g\SketchBookPro\SketchbookPro.exe\"';$s.WorkingDirectory='C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x64__k9x4nk31cvt0g\SketchBookPro';$s.WindowStyle=7;$s.Save()"
+:: For 64-bit
+powershell "$s=(New-Object -COM WScript.Shell).CreateShortcut('%userprofile%\Desktop\Sketchbook Pro 64Bit.lnk');$s.TargetPath='C:\Program Files\RunAsTI\RunAsTI64.exe';$s.IconLocation='C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x64__k9x4nk31cvt0g\SketchBookPro\SketchbookPro.exe';$s.Arguments='\"C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x64__k9x4nk31cvt0g\SketchBookPro\SketchbookPro.exe\"';$s.WorkingDirectory='C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x64__k9x4nk31cvt0g\SketchBookPro';$s.WindowStyle=7;$s.Save()"
 :: For 32-bit
-:: powershell "$s=(New-Object -COM WScript.Shell).CreateShortcut('%userprofile%\Desktop\Sketchbook Pro.lnk');$s.TargetPath='C:\Program Files\RunAsTI\RunAsTI32.exe';$s.IconLocation='C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x32__k9x4nk31cvt0g\SketchBookPro\SketchbookPro.exe';$s.Arguments='\"C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x32__k9x4nk31cvt0g\SketchBookPro\SketchbookPro.exe\"';$s.WorkingDirectory='C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x32__k9x4nk31cvt0g\SketchBookPro';$s.WindowStyle=7;$s.Save()"
-
+powershell "$s=(New-Object -COM WScript.Shell).CreateShortcut('%userprofile%\Desktop\Sketchbook Pro 32Bit.lnk');$s.TargetPath='C:\Program Files\RunAsTI\RunAsTI32.exe';$s.IconLocation='C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x32__k9x4nk31cvt0g\SketchBookPro\SketchbookPro.exe';$s.Arguments='\"C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x32__k9x4nk31cvt0g\SketchBookPro\SketchbookPro.exe\"';$s.WorkingDirectory='C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_9.1.38.0_x32__k9x4nk31cvt0g\SketchBookPro';$s.WindowStyle=7;$s.Save()"
+:: Remove inappropriate shortcut based on OS architecture
+if %OS%==64 (
+    del /f /q "%userprofile%\Desktop\Sketchbook Pro 32Bit.lnk"
+) else (
+    del /f /q "%userprofile%\Desktop\Sketchbook Pro 64Bit.lnk"
+)
 @pause
