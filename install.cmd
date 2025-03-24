@@ -1,10 +1,11 @@
 @echo OFF
-setlocal enabledelayedexpansion
+setlocal enabledelayedexpansion enableextensions
 
 :: Configuration variables
 set "VERSION=9.2.13.0"
 set "_VERSION=2025.303.1551.0"
 set "URL_SKETCHBOOK=https://github.com/Zebra2711/sketchbook.msixbundle/releases/download/v%VERSION%/Sketchbook.SketchbookPro_%_VERSION%_neutral_k9x4nk31cvt0g.Msixbundle"
+set "URL_RUNASTI=https://github.com/fafalone/RunAsTrustedInstaller/releases/download/v2.3.1"
 set "SKB_msixbundle=Sketchbook.SketchbookPro_%VERSION%_neutral_k9x4nk31cvt0g.msixbundle"
 set "RUNAS_TI_DIR=C:\Program Files\RunAsTI"
 set "MD5=d122d86727738277bb37e48abfa6d354"
@@ -12,193 +13,218 @@ set "SHA1=dd76308ddf4868da9bd2e8ad5e3fdd8e3a8aca63"
 set "SHA256=ab955a05d47f1123b5482174a41f426215268e92a3fb2bd1b33ce02342614aa9"
 set "SHA512=1cedb4e32946c9ca1c544a13c7c547dd9b6b961d07d0b40bcf0ba2f0f4ab695eb83bdfa84cb1281386d50b426d8741486adc4437c6da777b7f35931bd9ad2772"
 
-:: Run as admin
-@if not defined USER for /f "tokens=2" %%s in ('whoami /user /fo list') do set "USER=%%s">nul
-@set "_=set USER=%USER%&&call "%~f0" %*"&reg query HKU\S-1-5-19>nul 2>nul||(
-@powershell -nop -c "start -verb RunAs cmd -args '/d/x/q/r',$env:_"&exit)
+:: RunAsTI hash values
+set "RUNASTI32_MD5=765f74c0c0e5d6188c431e649d80e5f3"
+set "RUNASTI32_SHA1=2826e7504d5272942cba6fe6b51197fc08c5b054"
+set "RUNASTI32_SHA256=11f6fa6c80cbaa5c7348223417d33a633975ad00cae91d8c3ac8df64570982b3"
+set "RUNASTI32_SHA512=3d699c4f774fd7ad001270b82ea7f7946b63c4d21c4f18f568fbdd3155e06de1d95856a2abeb4feda2ad2d53a8781677930a53a8245ff68558c9751a55325eff"
+
+set "RUNASTI64_MD5=70ae58a1472a9e79667e16431409ceb1"
+set "RUNASTI64_SHA1=5c7623a4431e3c1fb589e362a71cb23efd831eb8"
+set "RUNASTI64_SHA256=0d61bf9b1a297334a3ae82183e290f3c75d30589aa1a4380bc22909deb6d45f1"
+set "RUNASTI64_SHA512=1182024ef56559f4a6d73594e958e1617aac62d8b66c2bd4397bf57c008e8ca128956ce1551cf95c908fc73f46c76f1285d23d9fe7021a52e61d6c60b756721a"
+
+:: Run as admin check
+>nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+if '%errorlevel%' NEQ '0' (
+    echo [INFO] Administrative privileges required for installation...
+    echo [ACTION] Requesting elevation to administrator...
+    powershell -NoP -NonI -EP Bypass -Command "Start-Process '%~dpnx0' -Verb RunAs" >nul 2>&1
+    exit /b
+)
 
 :: Create RunAsTI directory if it doesn't exist
-if not exist "%RUNAS_TI_DIR%" mkdir "%RUNAS_TI_DIR%"
-cd "%RUNAS_TI_DIR%"
+if not exist "%RUNAS_TI_DIR%" md "%RUNAS_TI_DIR%" 2>nul
+cd /d "%RUNAS_TI_DIR%" 2>nul || (echo [ERROR] Failed to access directory '%RUNAS_TI_DIR%' & exit /b 1)
 
 :: Check OS architecture
 reg Query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" > NUL && set OS=32 || set OS=64
+echo [INFO] Detected %OS%-bit Windows operating system
 
-:: Download RunAsTI if not already downloaded
-if not exist "%RUNAS_TI_DIR%\RunAsTI%OS%.exe" (
-    echo File not found. Preparing to download RunAsTI%OS%.exe...
-    powershell -Command ^
-        "$url = 'https://github.com/fafalone/RunAsTrustedInstaller/releases/download/v2.3.1/RunAsTI%OS%.exe';" ^
-        "$output = 'RunAsTI%OS%.exe';" ^
-        "$webclient = New-Object System.Net.WebClient;" ^
-        "$response = $webclient.OpenRead($url);" ^
-        "$totalLength = [int]$webclient.ResponseHeaders['Content-Length'];" ^
-        "$stream = [System.IO.File]::Create($output);" ^
-        "$buffer = New-Object byte[] 1024;" ^
-        "$read = $response.Read($buffer, 0, $buffer.Length);" ^
-        "$bytesRead = 0;" ^
-        "while ($read -gt 0) {" ^
-            "$stream.Write($buffer, 0, $read);" ^
-            "$bytesRead += $read;" ^
-            "$percentComplete = ($bytesRead / $totalLength) * 100;" ^
-            "Write-Progress -Activity 'Downloading RunAsTI' -Status ('{0:N2}%% Complete' -f $percentComplete) -PercentComplete $percentComplete;" ^
-            "$read = $response.Read($buffer, 0, $buffer.Length);" ^
-        "}" ^
-        "$stream.Close();" ^
-        "$response.Close();" ^
-        "echo 'Download completed successfully!';"
+if "%OS%"=="32" (
+    for %%H in (MD5 SHA1 SHA256 SHA512) do set "RUNASTI_%%H=!RUNASTI32_%%H!"
 ) else (
-    echo File already exists in the directory: %RUNAS_TI_DIR%.
+    for %%H in (MD5 SHA1 SHA256 SHA512) do set "RUNASTI_%%H=!RUNASTI64_%%H!"
 )
 
+set "MAX_ATTEMPTS=3"
 
+:: =======================================================================================================================================
+::                                                              MAIN FLOW
+:: =======================================================================================================================================
+echo.
+echo [START] Beginning Sketchbook Pro %VERSION% installation process...
+echo [INFO] Installation will proceed in several stages
+echo.
 
-:: Check if Sketchbook needs to be downloaded
-if not exist "%TEMP%\%SKB_msixbundle%" (
-    call :download_sketchbook
-) else (
-    echo Sketchbook file found. Verifying...
-    call :verify_hashes
-)
+::                 File Path                            Name          Download URL                        Hash Prefix    Display Name
+:: ---------------------------------------------------------------------------------------------------------------------------------------
+call :install_file "%RUNAS_TI_DIR%\RunAsTI%OS%.exe"     "RunAsTI"     "%URL_RUNASTI%/RunAsTI%OS%.exe"     "RUNASTI_"     "RunAsTI%OS%.exe"
+call :install_file "%TEMP%\%SKB_msixbundle%"            "Sketchbook"  "%URL_SKETCHBOOK%"                  ""             "%SKB_msixbundle%"
 
-:: Create system profile directory if it doesn't exist
-:: Define the subfolders to create
-set "systemprofile=C:\Windows\System32\config\systemprofile"
-for %%F in (Desktop Download Music Picture Video Document) do (
-    if not exist "%systemprofile%\%%F" (
-        mklink /J "%systemprofile%\%%F" "%userprofile%\%%F"
-        echo Created symlink for %%F
-    ) else (
-        echo Symlink for %%F already exists. Skipping creation
-    )
-)
-
-:: Install and create shortcut
+call :create_symlinks
 call :install_sketchbook
 call :create_shortcut
 goto :script_end
 
+:: =======================================================================================================================================
 
-set MAX_ATTEMPTS=3
-set ATTEMPT=0
+:install_file
+    if not exist "%~1" (
+        set "ATTEMPT=0"
+        echo [PROCESS] Initiating download of %~2 components...
+        call :download_file "%~2" "%~3" "%~1"
+        echo [VERIFY] Verifying file integrity for %~2...
+        call :verify_hashes "%~1" "%~4"
+    ) else (
+        echo [CHECK] %~5 found in system...
+        echo [VERIFY] Verifying existing file integrity...
+        call :verify_hashes "%~1" "%~4"
+    )
+exit /b 0
 
-:download_sketchbook
+:: Create system profile directory symlinks if it doesn't exist
+:create_symlinks
+echo.
+echo [SETUP] ========================================
+echo [SETUP] Creating necessary system profile links
+echo [SETUP] ========================================
+set "systemprofile=%SystemRoot%\system32\config\systemprofile"
+for %%F in (Desktop Downloads Music Pictures Videos Documents) do (
+    if not exist "%systemprofile%\%%F" (
+        echo [CREATE] Setting up system profile link for %%F folder...
+        mklink /J "%systemprofile%\%%F" "%userprofile%\%%F"
+    ) else (
+        echo [SKIP] System profile link for %%F already exists
+    )
+)
+exit /b 0
 
+:download_file
 set /a ATTEMPT+=1
-echo Downloading Sketchbook to %TEMP%\%SKB_msixbundle%...
-powershell -Command ^
-    "$url = '%URL_SKETCHBOOK%';" ^
-    "$output = [System.IO.Path]::Combine($env:TEMP, '%SKB_msixbundle%');" ^
-    "Write-Host 'Installation Path:' $output;" ^
-    "$webclient = New-Object System.Net.WebClient;" ^
-    "$response = $webclient.OpenRead($url);" ^
-    "$totalLength = [int]$webclient.ResponseHeaders['Content-Length'];" ^
-    "$stream = [System.IO.File]::Create($output);" ^
-    "$buffer = New-Object byte[] 8192;" ^
-    "$bytesRead = 0;" ^
-    "$read = $response.Read($buffer, 0, $buffer.Length);" ^
-    "$stopwatch = [System.Diagnostics.Stopwatch]::StartNew();" ^
-    "while ($read -gt 0) {" ^
-        "$stream.Write($buffer, 0, $read);" ^
-        "$bytesRead += $read;" ^
-        "$elapsedSeconds = $stopwatch.Elapsed.TotalSeconds;" ^
-        "$speedMBps = ($bytesRead / 1024 / 1024) / $elapsedSeconds;" ^
-        "$percentComplete = ($bytesRead / $totalLength) * 100;" ^
-        "Write-Progress -Activity 'Downloading Sketchbook' -Status ('{0:N2}%% Complete - Speed: {1:N2} MB/s' -f $percentComplete, $speedMBps) -PercentComplete $percentComplete;" ^
-        "$read = $response.Read($buffer, 0, $buffer.Length);" ^
+set "FILE_NAME=%~1"
+set "URL=%~2"
+set "OUTPUT_PATH=%~3"
+echo [DOWNLOAD] Fetching %FILE_NAME%... (Attempt !ATTEMPT! of %MAX_ATTEMPTS%)
+echo [INFO] Source: %URL%
+echo [INFO] Destination: %OUTPUT_PATH%
+
+powershell -NoP -NonI -EP Bypass -Command ^
+    "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;" ^
+    "$url='%URL%';" ^
+    "$output='%OUTPUT_PATH%';" ^
+    "$wc=New-Object System.Net.WebClient;" ^
+    "$wc.Headers.Add('User-Agent','Mozilla/5.0');" ^
+    "$response=$wc.OpenRead($url);" ^
+    "$total=[int]$wc.ResponseHeaders['Content-Length'];" ^
+    "$stream=[System.IO.File]::Create($output);" ^
+    "$buffer=New-Object byte[] 8192;" ^
+    "$bytesRead=0;" ^
+    "$read=$response.Read($buffer,0,$buffer.Length);" ^
+    "$sw=[System.Diagnostics.Stopwatch]::StartNew();" ^
+    "while($read -gt 0){" ^
+        "$stream.Write($buffer,0,$read);" ^
+        "$bytesRead+=$read;" ^
+        "$elapsed=$sw.Elapsed.TotalSeconds;" ^
+        "$speed=($bytesRead/1MB)/$elapsed;" ^
+        "$percent=($bytesRead/$total)*100;" ^
+        "Write-Progress -Activity 'Downloading %FILE_NAME%' -Status ('{0:N2}%% Complete - {1:N2} MB/s' -f $percent,$speed) -PercentComplete $percent;" ^
+        "$read=$response.Read($buffer,0,$buffer.Length);" ^
     "}" ^
     "$stream.Close();" ^
     "$response.Close();" ^
-    "if (-Not (Test-Path $output)) {" ^
-        "Write-Host 'Download failed!';" ^
-    "} else {" ^
-        "Write-Host 'File downloaded successfully.';" ^
-    "}"
-
-
+    "if(Test-Path $output){exit 0}else{exit 1}"
 
 if errorlevel 1 (
-    echo Download failed.
     if !ATTEMPT! geq %MAX_ATTEMPTS% (
-        echo Maximum attempts reached. Exiting...
+        echo [ERROR] Download failed after %MAX_ATTEMPTS% attempts
         exit /b 1
     )
-    echo Try agsin
-    goto :download_sketchbook
+    echo [RETRY] Download attempt failed, retrying...
+    goto :download_file
 )
-
-echo Download completed successfully!
-
-call :verify_hashes
-exit /b
+echo [SUCCESS] Download completed successfully
+exit /b 0
 
 :verify_hashes
-echo Verifying file hashes...
-set "HASH_CHECK=1"
-
-call :verify_hash MD5 "%MD5%"
-call :verify_hash SHA1 "%SHA1%"
-call :verify_hash SHA256 "%SHA256%"
-call :verify_hash SHA512 "%SHA512%"
-
-if /i not "%HASH_CHECK%" == "0" (
-    echo File passed all hash verifications.
+set "FILE_PATH=%~1"
+set "PREFIX=%~2"
+echo [VERIFY] Performing integrity checks using multiple hash algorithms...
+for %%A in (MD5 SHA1 SHA256 SHA512) do (
+    call :verify_hash "%%A" "!%PREFIX%%%A!" "%FILE_PATH%" || exit /b 1
 )
-exit /b
+exit /b 0
 
 :verify_hash
+set "FAILED=0"
 set "ALGO=%~1"
 set "EXPECTED=%~2"
-echo Checking %ALGO% hash...
-for /f "skip=1 tokens=* delims=" %%a in ('certutil -hashfile "%TEMP%\%SKB_msixbundle%" %ALGO%') do (
-    set "line=%%a"
-    if not "!line:~0,1!"==" " (
-        set "HASH=!line!"
-        goto :compare_hash
+set "FILE_PATH=%~3"
+for /f "skip=1 tokens=* delims=" %%a in ('certutil -hashfile "%FILE_PATH%" %ALGO%') do (
+    set "HASH=%%a"
+    if not "!HASH:~0,1!"==" " goto :check_hash
+)
+if /i "%FAILED%" == "0" (
+    echo [SUCCESS] File integrity verified successfully using all hash algorithms
+)
+
+:check_hash
+set "HASH=!HASH: =!"
+if /i not "!HASH!"=="%EXPECTED%" (
+    echo [WARNING] %ALGO% verification failed for %FILE_PATH%
+    set "FAILED=1"
+    echo [DETAIL] Expected: %EXPECTED%
+    echo [DETAIL] Received: !HASH!
+    echo [ACTION] Removing corrupted file...
+    del /f /q "%FILE_PATH%" 2>nul
+    echo [RETRY] Initiating file redownload...
+    set "ATTEMPT=0"
+    if "%PREFIX%"=="RUNASTI_" (
+        set "URL=%URL_RUNASTI%/RunAsTI%OS%.exe"
+        call :download_file "RunAsTI" "!URL!" "%FILE_PATH%"
+    ) else (
+        call :download_file "Sketchbook" "%URL_SKETCHBOOK%" "%FILE_PATH%"
     )
 )
-
-:compare_hash
-set "HASH=!HASH: =!"
-if /i not "!HASH!" == "%EXPECTED%" (
-    echo %ALGO% hash verification failed.
-    echo Expected: %EXPECTED%
-    echo Got: !HASH!
-    set "HASH_CHECK=0"
-    echo Redownloading file...
-    del /f /q "%TEMP%\%SKB_msixbundle%" 2>nul
-    call :download_sketchbook
-)
-exit /b
+exit /b 0
 
 :install_sketchbook
-echo Installing Sketchbook...
-powershell -Command "Add-AppxPackage -Path \"$env:TEMP\%SKB_msixbundle%\""
+echo.
+echo [INSTALL] ========================================
+echo [INSTALL] Installing Sketchbook Pro %VERSION%
+echo [INSTALL] ========================================
+powershell -NoP -NonI -EP Bypass -Command "Add-AppxPackage -Path \"$env:TEMP\%SKB_msixbundle%\""
 if %errorlevel% neq 0 (
-    echo Installation failed with error code %errorlevel%
+    echo [ERROR] Installation failed with error code %errorlevel%
+    echo [INFO] Please check system requirements and try again
     exit /b 1
 )
-echo Installation completed successfully.
-exit /b
+echo [SUCCESS] Sketchbook Pro installation completed successfully
+exit /b 0
 
 :create_shortcut
-echo Creating desktop shortcut...
+echo.
+echo [SETUP] Creating desktop shortcut for easy access...
 set "APP_DIR=C:\Program Files\WindowsApps\Sketchbook.SketchbookPro_%VERSION%_x%OS%__k9x4nk31cvt0g\SketchBookPro"
 set "SHORTCUT_NAME=Sketchbook Pro.lnk"
 
-powershell -Command ^
-  "$s = (New-Object -COM WScript.Shell).CreateShortcut('%userprofile%\Desktop\%SHORTCUT_NAME%');" ^
-  "$s.TargetPath = '%RUNAS_TI_DIR%\RunAsTI%OS%.exe';" ^
-  "$s.IconLocation = '%APP_DIR%\SketchbookPro.exe';" ^
-  "$s.Arguments = '\"%APP_DIR%\SketchbookPro.exe\"';" ^
-  "$s.WorkingDirectory = '%APP_DIR%';" ^
-  "$s.WindowStyle = 7;" ^
-  "$s.Save();"
+powershell -NoP -NonI -EP Bypass -Command ^
+    "$s = (New-Object -COM WScript.Shell).CreateShortcut('%userprofile%\Desktop\%SHORTCUT_NAME%');" ^
+    "$s.TargetPath = '%RUNAS_TI_DIR%\RunAsTI%OS%.exe';" ^
+    "$s.IconLocation = '%APP_DIR%\SketchbookPro.exe';" ^
+    "$s.Arguments = '\"%APP_DIR%\SketchbookPro.exe\"';" ^
+    "$s.WorkingDirectory = '%APP_DIR%';" ^
+    "$s.WindowStyle = 7;" ^
+    "$s.Save();"
 
-echo Shortcut created successfully.
-exit /b
+echo [SUCCESS] Desktop shortcut created successfully
+exit /b 0
 
 :script_end
-echo Installation complete!
+echo.
+echo [COMPLETE] ===========================
+echo [COMPLETE]  Installation successful!
+echo [COMPLETE] ===========================
+endlocal
 pause
 exit /b 0
