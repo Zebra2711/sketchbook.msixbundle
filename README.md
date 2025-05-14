@@ -24,4 +24,4 @@ if You want sync theme with your system
 
 ## TODO
 
-- [] Fix error when open file directly from textmenu to edit with skeetch book
+- [ ] Fix error when open file directly from textmenu to edit with skeetch book
