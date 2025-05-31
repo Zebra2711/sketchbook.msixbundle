@@ -11,3 +11,17 @@ Releases, download .msixbundle file and install manual (Fixed in new version 9.2
   <video src="https://github.com/user-attachments/assets/fbdf050b-7d04-4504-abfb-499b97fd4829" alt="show all folders"></video>
 </div>
 
+## Sync theme system for explorer window
+
+Sketchbook runs in `%systemprofile%`, not `%userprofile%`
+Therefore, when opening file explorer via skeetchbook to open, save, etc. It will open explorer with "light theme"
+if You want sync theme with your system 
+* Run `SyncTheme.bat` to auto sync theme
+* Manualy:
+    + Export the key `HKCU\Software\Microsoft\Windows\CurrentVersion\Themes` from the registry
+    + Used notepad to open the exported `.reg` file and replace string `HKEY_CURRENT_USER` with `HKEY_USERS\\S-1-5-18`. Save the changes.
+    + Import the saved `.reg` file. Done.
+
+## TODO
+
+- [ ] Fix error when opening file directly from text menu to edit with Sketchbook.
