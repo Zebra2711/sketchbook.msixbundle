@@ -5,7 +5,7 @@ setlocal enabledelayedexpansion enableextensions
 set "VERSION=9.3.14.0"
 set "_VERSION=2025.708.1825.0"
 set "URL_SKETCHBOOK=https://github.com/Zebra2711/sketchbook.msixbundle/releases/download/v%VERSION%/Sketchbook.SketchbookPro_%_VERSION%_neutral_k9x4nk31cvt0g.Msixbundle"
-set "URL_RUNASTI=https://github.com/fafalone/RunAsTrustedInstaller/releases/download/v2.3.1"
+set "URL_RUNASTI=https://github.com/fafalone/RunAsTrustedInstaller/releases/download/v2.3.2"
 set "SKB_msixbundle=Sketchbook.SketchbookPro_%VERSION%_neutral_k9x4nk31cvt0g.msixbundle"
 set "RUNAS_TI_DIR=C:\Program Files\RunAsTI"
 set "MD5=79c2efb3f980c0d1944177ac946429bb"
@@ -14,15 +14,15 @@ set "SHA256=1ff309043bfd954ed91f33f2716678e893953790602a3d6cbcc62dafa1fc3a4c"
 set "SHA512=fd3abdbaa90c25a42f07f1b4b5208135350bf86e4981899f36aae66e9c25347920a9341a932d3cd281d09cf85978fc7e9371cc40325d95e730c2d08fef0a013f"
 
 :: RunAsTI hash values
-set "RUNASTI32_MD5=765f74c0c0e5d6188c431e649d80e5f3"
-set "RUNASTI32_SHA1=2826e7504d5272942cba6fe6b51197fc08c5b054"
-set "RUNASTI32_SHA256=11f6fa6c80cbaa5c7348223417d33a633975ad00cae91d8c3ac8df64570982b3"
-set "RUNASTI32_SHA512=3d699c4f774fd7ad001270b82ea7f7946b63c4d21c4f18f568fbdd3155e06de1d95856a2abeb4feda2ad2d53a8781677930a53a8245ff68558c9751a55325eff"
+set "RUNASTI32_MD5=2a5153020e1a127f0e3177555f83971e"
+set "RUNASTI32_SHA1=13eae3abd9bab969dcdddda2d79cea4ca5082826"
+set "RUNASTI32_SHA256=61aeff126f3199fd7637a0bfa1fb65c703dae06f180d4eddb377cacd6593007c"
+set "RUNASTI32_SHA512=d2770e74af6ecc651cbe90199ef8d7872adb2f6f3a9b2e9294b8fce9ed3043a5bd0fde7861c691ed550bd065bbe6d27fb3466c182339220a1ccf99be83ea10f5"
 
-set "RUNASTI64_MD5=70ae58a1472a9e79667e16431409ceb1"
-set "RUNASTI64_SHA1=5c7623a4431e3c1fb589e362a71cb23efd831eb8"
-set "RUNASTI64_SHA256=0d61bf9b1a297334a3ae82183e290f3c75d30589aa1a4380bc22909deb6d45f1"
-set "RUNASTI64_SHA512=1182024ef56559f4a6d73594e958e1617aac62d8b66c2bd4397bf57c008e8ca128956ce1551cf95c908fc73f46c76f1285d23d9fe7021a52e61d6c60b756721a"
+set "RUNASTI64_MD5=0e62fc7ceae46df907c0c5464de0edc6"
+set "RUNASTI64_SHA1=d5540fe7961d00a40f20d3ba5aba176bea42b211"
+set "RUNASTI64_SHA256=92a75d619744fc9559d50eac77537c89a829ff63de23162d6d63fca15ca947de"
+set "RUNASTI64_SHA512=a0e88fe160e3f80c7e7f8218e91f017ae61d941e6f3d151a31ec35ccde23c364e8911a05af3e7e0d4336f4a83f9fca31863f440e946e902ccd87fec609417569"
 
 :: Run as admin check
 >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
