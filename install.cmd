@@ -2,16 +2,16 @@
 setlocal enabledelayedexpansion enableextensions
 
 :: Configuration variables
-set "VERSION=9.3.21.0"
-set "_VERSION=2025.924.1427.0"
+set "VERSION=9.3.24.0"
+set "_VERSION=2025.1106.1758.0"
 set "URL_SKETCHBOOK=https://github.com/Zebra2711/sketchbook.msixbundle/releases/download/v%VERSION%/Sketchbook.SketchbookPro_%_VERSION%_neutral_k9x4nk31cvt0g.Msixbundle"
 set "URL_RUNASTI=https://github.com/fafalone/RunAsTrustedInstaller/releases/download/v2.3.2"
 set "SKB_msixbundle=Sketchbook.SketchbookPro_%VERSION%_neutral_k9x4nk31cvt0g.msixbundle"
 set "RUNAS_TI_DIR=C:\Program Files\RunAsTI"
-set "MD5=b65c500789394c01093069e9f6cfd57f"
-set "SHA1=a664c7a3cc9bbd206ef0b841b73d6e8ded1f7b52"
-set "SHA256=79ab914262e56026d5060a3e3642585600d4c7ded4f79e87af0c0c945e02715a"
-set "SHA512=58d50c9b80fe89069118e81807b7b45a07500d5a5569ee29fbddab8d6b4332e4d2b2084985cd13ff86a7d33ae8b16f6113b7543b112d89cfb950a34c79153172"
+set "MD5=3cf0f8233dac64fb48c7477fdd6992aa"
+set "SHA1=5792ca93c5914076780ea26c9cbd5130dd8646a7"
+set "SHA256=70f1bee57070086c419874bd3484a196e042cde51924e330df42394dd5fa23d8"
+set "SHA512=58231bdcba703364bd01de0c90edb67160896caa975d68b6c29edac5dc8b5447392f4d32aecf5d8e35188daf4226f2732414ed09017fbfe537f09e607672ec45"
 
 :: RunAsTI hash values
 set "RUNASTI32_MD5=2a5153020e1a127f0e3177555f83971e"
