@@ -23,5 +23,5 @@ if You want sync theme with your system
     + Import the saved `.reg` file. Done.
 
 ## TODO
-
+- [ ] Fix install brushes ( ez to fix)
 - [ ] Fix error when opening file directly from text menu to edit with Sketchbook.
