@@ -1,3 +1,6 @@
+# NO LONGER WORKS ON VERSION 9.4.10. PLEASE USE THE OLD VERSION INSTEAD.
+
+
 # Script auto install, create shortcut sketchbook pro 
 ## How to use:
 Download `install.cmd` and run
